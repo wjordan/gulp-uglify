@@ -1,5 +1,7 @@
 'use strict';
-var through = require('through2'),
+var transform = require('parallel-transform'),
+	cpus = require('os').cpus().length,
+	mnfy = require('mnfy/master'),
 	uglify = require('uglify-js'),
 	merge = require('deepmerge'),
 	PluginError = require('gulp-util/lib/PluginError'),
@@ -7,15 +9,22 @@ var through = require('through2'),
 	reSourceMapComment = /\n\/\/# sourceMappingURL=.+?$/,
 	pluginName = 'gulp-uglify';
 
-function minify(file, options) {
-	var mangled;
+mnfy.fork();
+mnfy.fork();
+mnfy.fork();
+mnfy.fork();
 
+function minify(file, options, callback) {
 	try {
-		mangled = uglify.minify(String(file.contents), options);
-		mangled.code = new Buffer(mangled.code.replace(reSourceMapComment, ''));
-		return mangled;
+		mnfy.js(String(file.contents)).then(function (res) {
+			file.contents = new Buffer(res.code.replace(reSourceMapComment, ''));
+			if (file.sourceMap) {
+				applySourceMap(file, res.map);
+			}
+			return callback(null, file);
+		});
 	} catch (e) {
-		return createError(file, e);
+		return callback(createError(file, e));
 	}
 }
 
@@ -56,8 +65,7 @@ function createError(file, err) {
 }
 
 module.exports = function(opt) {
-
-	function uglify(file, encoding, callback) {
+	function uglify(file, callback) {
 		var options = setup(opt);
 
 		if (file.isNull()) {
@@ -73,20 +81,12 @@ module.exports = function(opt) {
 			options.inSourceMap = file.sourceMap.mappings !== '' ? file.sourceMap : undefined;
 		}
 
-		var mangled = minify(file, options);
-
-		if (mangled instanceof PluginError) {
-			return callback(mangled);
-		}
-
-		file.contents = mangled.code;
-
-		if (file.sourceMap) {
-			applySourceMap(file, mangled.map);
-		}
-
-		callback(null, file);
+		minify(file, options, callback);
 	}
 
-	return through.obj(uglify);
+	var stream = transform(cpus, uglify);
+	stream.on('end', function() {
+		mnfy.kill();
+	});
+	return stream;
 };
