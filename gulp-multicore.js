@@ -49,7 +49,7 @@ module.exports = function (moduleName) {
 				if(!format) {
 					var tmp = require('tmp');
 					var fs = require('fs');
-					tmp.file({keep: true}, function _tempFileCreated(err, path, fd, cleanupCallback) {
+					tmp.file(function _tempFileCreated(err, path, fd, cleanupCallback) {
 						if (err) throw err;
 						fs.write(fd, "require('" + __dirname + "/node_modules/slave/slave')(require('" + require.resolve(moduleName) + "'));");
 						format = require('slave/master')(require.resolve(path));
