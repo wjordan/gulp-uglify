@@ -7,10 +7,14 @@
   "dependencies": {
     "deepmerge": ">=0.2.7 <0.3.0-0",
     "gulp-util": ">=3.0.0 <4.0.0-0",
-    "through2": ">=0.6.1 <1.0.0-0",
-    "uglify-js": "2.4.15",
     "mnfy": "^3.1.0",
+    "native-or-bluebird": "^1.1.2",
     "parallel-transform": "^0.2.2",
+    "slave": "^1.2.2",
+    "through2": ">=0.6.1 <1.0.0-0",
+    "tmp": "0.0.24",
+    "uglify-js": "2.4.15",
+    "uglyfly-js": "^3.0.4",
     "vinyl-sourcemaps-apply": ">=0.1.1 <0.2.0-0"
   },
   "devDependencies": {
